@@ -1,12 +1,12 @@
 // middleware for all endpoints
-import { auth } from "@clerk/nextjs";
+
 import { clerkMiddleware ,createRouteMatcher} from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // the routes that can be acces without token
 const  isPublicRoute=createRouteMatcher([
-  "/signin",
-  "/signup",
+  "/sign-in",
+  "/sign-up",
   "/home",
   "/"
 ])
@@ -17,6 +17,7 @@ const isPublicApiRoute=createRouteMatcher([
 ]) 
 export default   clerkMiddleware(async(auth,req)=>
 {
+   console.log("Middleware:", req.nextUrl.pathname);
    const {userId}=await auth();
    const currentUrl=new URL(req.url);
   const isHomePage=currentUrl.pathname==="/home"
@@ -31,7 +32,7 @@ export default   clerkMiddleware(async(auth,req)=>
       // if the user in not logged in then he cant access any private route
       if(!isPublicApiRoute(req)&&!isPublicRoute(req))
         {
-      return  NextResponse.redirect(new URL("/signin",req.url));
+      return  NextResponse.redirect(new URL("/sign-in",req.url));
     }
   }
   // giving control to next section
