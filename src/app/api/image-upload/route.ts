@@ -16,57 +16,62 @@ interface CloudinaryUploadResult {
     public_id:string,
     [key:string]:any
 }
-export  async  function POST(request:NextRequest)
-{
-    // if the user in noty signed  in, dont allow for uploading
-    const {userId}=  await auth()
+export async function POST(request: NextRequest) {
+  // if the user in noty signed  in, dont allow for uploading
+  const { userId } = await auth();
 
-    if(!userId)
-    {
-        return NextResponse.json({error:"Unauthorized"},{status:401})
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // if any cloudinary credential is absent
+  if (
+    !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+    !process.env.CLOUDINARY_API_KEY ||
+    !process.env.CLOUDINARY_API_SECRET
+  ) {
+    return NextResponse.json(
+      { error: "Cloudinary credentials not found" },
+      { status: 500 },
+    );
+  }
+  try {
+    // extracting the image file
+    const formData = await request.formData();
+    const file = (formData.get("file") as File) || null;
+
+    // if the image is absent
+    if (!file) {
+      return NextResponse.json({ error: "file not found" }, { status: 400 });
     }
 
-    try {
-        
-        // extracting the image file
-        const formData= await request.formData();
-        const file= formData.get('file') as File||null;
+    // converting  the image data into btytes and storing it in array buffer
+    const bytes = await file.arrayBuffer();
 
-        // if the image is absent
-        if(!file)
-        {
-            return NextResponse.json({error:"file not found"},{status:400})
-        }
+    // shifting the image data from the array buffer to only buffer(cloudinary accepts that)
+    const buffer = Buffer.from(bytes);
 
-        // converting  the image data into btytes and storing it in array buffer
-        const bytes= await  file.arrayBuffer();
+    // uploading the image
+    const result = await new Promise<CloudinaryUploadResult>(
+      (resolve, reject) => {
+        const uplaoadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: "pixelforge-image-upload",
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result as CloudinaryUploadResult);
+          },
+        );
 
-        // shifting the image data from the array buffer to only buffer(cloudinary accepts that)
-        const buffer=Buffer.from(bytes);
+        //    ending the upload
+        uplaoadStream.end(buffer);
+      },
+    );
 
-        // uploading the image
-        const result=await  new Promise<CloudinaryUploadResult>(
-            (resolve,reject)=>
-            {
-               const uplaoadStream=cloudinary.uploader.upload_stream(
-                {
-                    folder:"pixelforge-image-upload"
-                },
-                (error,result)=>
-                {
-                    if(error)reject(error);
-                    else  resolve(result as CloudinaryUploadResult)
-                }
-               )
-
-            //    ending the upload
-               uplaoadStream.end(buffer);
-            }
-        )
-
-        return NextResponse.json({publicId:result.public_id},{status:200})
-    } catch (error:any) {
-        console.log("Upload image failed",error);
-        return NextResponse.json({error:"Uplaod,image,failed"},{status:500})
-    }
+    return NextResponse.json({ publicId: result.public_id }, { status: 200 });
+  } catch (error: any) {
+    console.log("Upload image failed", error);
+    return NextResponse.json({ error: "Uplaod,image,failed" }, { status: 500 });
+  }
 }
