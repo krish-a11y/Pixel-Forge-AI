@@ -21,18 +21,23 @@ function VideoUpload() {
   // when user click on submit
   const handleSubmit=async(e:React.FormEvent)=>
   {
+
      e.preventDefault();
+    //  if the file is absent
      if(!file)
      {
       return ;
      }
 
+    //  if the  file excced the max size
      if(file.size>MAX_FILE_SIZE)
      {
       alert("file size too large")
+      return 
      }
 
      setIsUploading(true);
+    //  attaching data to form data for sending to the backend
      const formData=new FormData();
      formData.append("file",file);
      formData.append("title",title);
@@ -40,12 +45,9 @@ function VideoUpload() {
      formData.append("originalSize",file.size.toString());
 
      try {
-      
+      // uploading the video
       const response=await axios.post("/api/video-upload",formData);
-      if(response.status!=200)
-      {
-        throw new Error("failed to upload video")
-      }
+
      } catch (error:any) {
       console.log("failed to upload video",error)
      }finally
