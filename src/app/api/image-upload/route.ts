@@ -1,6 +1,6 @@
 // uploading the image to the cloudinary
-import { NextResponse,NextRequest } from "next/server";
-import {auth} from "@clerk/nextjs/server"
+import { NextResponse, NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { v2 as cloudinary } from "cloudinary";
 import { error } from "console";
 
@@ -13,8 +13,8 @@ cloudinary.config({
 
 // interface for storing the result after uploading image
 interface CloudinaryUploadResult {
-    public_id:string,
-    [key:string]:any
+  public_id: string;
+  [key: string]: any;
 }
 export async function POST(request: NextRequest) {
   // if the user in noty signed  in, dont allow for uploading
@@ -38,7 +38,27 @@ export async function POST(request: NextRequest) {
   try {
     // extracting the image file
     const formData = await request.formData();
+    // debug: list form keys
+    try {
+      const keys = Array.from(formData.keys());
+      console.log("image-upload form keys:", keys);
+    } catch (e) {
+      console.log("failed to list form keys", e);
+    }
+
     const file = (formData.get("file") as File) || null;
+    // debug: basic file info
+    if (file) {
+      try {
+        console.log("image-upload file:", {
+          name: (file as any).name,
+          size: (file as any).size,
+          type: (file as any).type,
+        });
+      } catch (e) {
+        console.log("could not read file metadata", e);
+      }
+    }
 
     // if the image is absent
     if (!file) {
@@ -59,8 +79,10 @@ export async function POST(request: NextRequest) {
             folder: "pixelforge-image-upload",
           },
           (error, result) => {
-            if (error) reject(error);
-            else resolve(result as CloudinaryUploadResult);
+            if (error) {
+              console.error("cloudinary upload error:", error);
+              reject(error);
+            } else resolve(result as CloudinaryUploadResult);
           },
         );
 
@@ -71,7 +93,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ publicId: result.public_id }, { status: 200 });
   } catch (error: any) {
-    console.log("Upload image failed", error);
+    // try to serialize error with own properties
+    try {
+      const serial = JSON.stringify(error, Object.getOwnPropertyNames(error));
+      console.error("Upload image failed:", serial);
+    } catch (e) {
+      console.error("Upload image failed (non-serializable)", error);
+    }
     return NextResponse.json({ error: "Uplaod,image,failed" }, { status: 500 });
   }
 }
