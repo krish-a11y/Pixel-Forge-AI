@@ -35,35 +35,51 @@ function Home() {
   },[fetchVideos])
 
   // downloading  the video
-  const handleDownload=useCallback((title:string,url:string)=>{
-   
-      // creating new element 
-      const link=document.createElement("a");
-      // appending  the video link 
-      link.href=url;
-      // as the user click the video open on new window
-      link.setAttribute("target","_blank")
+  const handleDownload = useCallback((url: string, title: string) => {
+    // creating new element
+    const link = document.createElement("a");
+    // appending  the video link
+    link.href = url;
+    // as the user click the video open on new window
+    link.setAttribute("target", "_blank");
 
-      // tell the browser to download the video
-      link.setAttribute("download",`${title}.png`);
+    // tell the browser to download the video
+    link.setAttribute("download", `${title}.mp4`);
 
-      // appending the child to the DOM
-      document.body.appendChild(link);
+    // appending the child to the DOM
+    document.body.appendChild(link);
 
-      // automatically clicking on the tag to start the doenload
-      link.click();
+    // automatically clicking on the tag to start the doenload
+    link.click();
 
-      // removing the element as the download is over
-      document.body.removeChild(link);
-  },[])
+    // removing the element as the download is over
+    document.body.removeChild(link);
+  }, []);
 
   if(loading)
   {
     return <div>Loading...</div>
   }
   return (
-    <div>Home</div>
-  )
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Videos</h1>
+      {videos.length === 0 ? (
+        <div className="text-center text-lg text-gray-500">
+          No videos available
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {videos.map((video) => (
+            <VideoCard
+              key={video.id}
+              video={video}
+              onDownload={handleDownload}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default Home
