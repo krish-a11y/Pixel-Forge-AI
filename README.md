@@ -119,6 +119,3 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 - **Social share** (`/social-share`): the client uploads an image to `/api/image-upload`, which stores it on Cloudinary and returns a `publicId`. The frontend then uses `next-cloudinary`'s `CldImage` component to render on-the-fly transformations for each social media aspect ratio, which can be downloaded directly.
 - **Home** (`/home`): fetches all saved videos from `/api/videos` and renders them with original vs. compressed size comparisons.
 
-## License
-
-No license specified yet. Add one (e.g. MIT) if you plan to open source this project.
